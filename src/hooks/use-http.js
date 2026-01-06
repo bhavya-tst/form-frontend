@@ -1,8 +1,8 @@
 import { useState, useCallback } from "react";
 import axios from "axios";
 import { notification } from "antd";
-import Services from "../util/API/service";
-import { deleteAuthDetails } from "../util/API/authStorage";
+import Services from "../util/service";
+
 import { useAuth } from "../contexts/AuthContext";
 import { useError } from "../contexts/ErrorContext";
 
@@ -30,6 +30,8 @@ const useHttp = () => {
   const sendRequest = useCallback(
     async (url, responseHandler, payload, successMessage, errorHandler) => {
       setIsLoading(true);
+      console.log('useHttp sendRequest called with:', { url, payload });
+      console.log('Services instance:', Services);
       try {
         let response;
         // url object structure: { type: "POST", endpoint: "..." }

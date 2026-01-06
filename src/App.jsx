@@ -2,11 +2,12 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { ErrorProvider } from './contexts/ErrorContext';
 import AdminLayout from './layouts/AdminLayout';
-import Login from './pages/Login';
-import Forms from './pages/Forms';
-import Websites from './pages/Websites';
-import Migration from './pages/Migration';
+import Login from './components/Login';
+import Forms from './components/Forms';
+import Websites from './components/Websites';
+import Migration from './components/Migration';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -79,9 +80,11 @@ export default function App() {
   return (
     <Router>
       <AuthProvider>
-        <ThemeProvider>
-          <AppRoutes />
-        </ThemeProvider>
+        <ErrorProvider>
+          <ThemeProvider>
+            <AppRoutes />
+          </ThemeProvider>
+        </ErrorProvider>
       </AuthProvider>
     </Router>
   );

@@ -2,32 +2,27 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, message } from 'antd';
 import { LockOutlined, FormOutlined } from '@ant-design/icons';
-import { useAuth } from '../contexts/AuthContext';
-import service from '../util/API/service';
-import { API_ENDPOINTS } from '../util/constant/CONSTANTS';
+import { useAuth } from '../../contexts/AuthContext';
+import useHttp from '../../hooks/use-http';
+import { API_ENDPOINTS } from '../../util/constant/CONSTANTS';
 
 export default function Login() {
-  const [loading, setLoading] = useState(false);
+  const { isLoading: loading, sendRequest } = useHttp();
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const onFinish = async (values) => {
-    setLoading(true);
-    try {
-      const response = await service.post(API_ENDPOINTS.AUTH.LOGIN, {
-        password: values.password,
-      });
-
-      if (response.status === 200) {
+  const onFinish = (values) => {
+    sendRequest(
+      API_ENDPOINTS.AUTH.LOGIN,
+      () => {
         login(values.password);
         message.success('Login successful!');
         navigate('/forms');
-      }
-    } catch (error) {
-      message.error(error.response?.data?.message || 'Invalid credentials. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+      },
+      { password: values.password },
+      null, // success message handled above
+      (err) => message.error(err || 'Invalid credentials. Please try again.')
+    );
   };
 
   return (

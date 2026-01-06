@@ -1,7 +1,7 @@
 
 import axios from 'axios';
-import { API_BASE_URL } from '../constant/CONSTANTS';
-import { authStorage } from './authStorage';
+import { API_BASE_URL } from './constant/CONSTANTS';
+import { authStorage } from './auth';
 
 const service = axios.create({
   baseURL: API_BASE_URL,

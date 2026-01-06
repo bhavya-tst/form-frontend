@@ -1,35 +1,48 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { ConfigProvider, theme as antdTheme } from 'antd';
 import { STORAGE_KEYS } from '../util/constant/CONSTANTS';
 
 const ThemeContext = createContext(null);
 
 export const ThemeProvider = ({ children }) => {
   const [isDark, setIsDark] = useState(() => {
-    const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME);
-    if (savedTheme) {
-      return savedTheme === 'dark';
-    }
+    const saved = localStorage.getItem(STORAGE_KEYS.THEME);
+    if (saved) return saved === 'dark';
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
   useEffect(() => {
-    const rootjw = window.document.documentElement;
+    const root = window.document.documentElement;
     if (isDark) {
-      rootjw.classList.add('dark');
-      localStorage.setItem(STORAGE_KEYS.THEME, 'dark');
+      root.classList.add('dark');
     } else {
-      rootjw.classList.remove('dark');
-      localStorage.setItem(STORAGE_KEYS.THEME, 'light');
+      root.classList.remove('dark');
     }
+    localStorage.setItem(STORAGE_KEYS.THEME, isDark ? 'dark' : 'light');
   }, [isDark]);
 
   const toggleTheme = () => {
     setIsDark((prev) => !prev);
   };
 
+  const antdConfig = {
+    algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+    token: {
+      colorPrimary: '#0ea5e9',
+      colorSuccess: '#22c55e',
+      colorWarning: '#f59e0b',
+      colorError: '#ef4444',
+      colorInfo: '#0ea5e9',
+      borderRadius: 8,
+      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+    },
+  };
+
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme }}>
-      {children}
+      <ConfigProvider theme={antdConfig}>
+        {children}
+      </ConfigProvider>
     </ThemeContext.Provider>
   );
 };

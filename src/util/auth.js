@@ -1,4 +1,4 @@
-import { STORAGE_KEYS } from '../constant/CONSTANTS';
+import { STORAGE_KEYS } from './constant/CONSTANTS';
 
 export const authStorage = {
   getSecret() {

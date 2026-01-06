@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Card, Select, Button, message, Alert, Table, Tag, Progress } from 'antd';
 import { SwapOutlined, ArrowRightOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import service from '../util/API/service';
-import { API_ENDPOINTS } from '../util/constant/CONSTANTS';
+import useHttp from '../../hooks/use-http';
+import { API_ENDPOINTS } from '../../util/constant/CONSTANTS';
 
 export default function Migration() {
   const [forms, setForms] = useState([]);
   const [sourceFormId, setSourceFormId] = useState(null);
   const [targetFormId, setTargetFormId] = useState(null);
   const [websitesPreview, setWebsitesPreview] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { isLoading: loading, sendRequest } = useHttp();
   const [migrating, setMigrating] = useState(false);
   const [migrationComplete, setMigrationComplete] = useState(false);
 
@@ -25,34 +25,31 @@ export default function Migration() {
     }
   }, [sourceFormId]);
 
-  const fetchForms = async () => {
-    try {
-      const response = await service.get(API_ENDPOINTS.FORMS.LIST);
-      setForms(response.data?.data?.rows || []);
-    } catch (error) {
-      message.error('Failed to fetch forms');
-    }
+  const fetchForms = () => {
+    sendRequest(
+      API_ENDPOINTS.FORMS.LIST,
+      (data) => setForms(data?.data?.rows || []),
+      null,
+      null,
+      (err) => message.error(err || 'Failed to fetch forms')
+    );
   };
 
-  const fetchWebsitesPreview = async () => {
-    setLoading(true);
-    try {
-      const response = await service.get(API_ENDPOINTS.WEBSITES.LIST, {
-        params: {
-          formId: sourceFormId,
-          page: 1,
-          limit: 100,
-        },
-      });
-      setWebsitesPreview(response.data?.data?.rows || []);
-    } catch (error) {
-      message.error('Failed to fetch websites preview');
-    } finally {
-      setLoading(false);
-    }
+  const fetchWebsitesPreview = () => {
+    sendRequest(
+      API_ENDPOINTS.WEBSITES.LIST,
+      (data) => setWebsitesPreview(data?.data?.rows || []),
+      {
+        formId: sourceFormId,
+        page: 1,
+        limit: 100,
+      },
+      null,
+      (err) => message.error(err || 'Failed to fetch websites preview')
+    );
   };
 
-  const handleMigrate = async () => {
+  const handleMigrate = () => {
     if (!sourceFormId || !targetFormId) {
       message.warning('Please select both source and target forms');
       return;
@@ -71,24 +68,26 @@ export default function Migration() {
     setMigrating(true);
     setMigrationComplete(false);
 
-    try {
-      const websiteIds = websitesPreview.map((w) => w.id);
-
-      await service.post(API_ENDPOINTS.WEBSITES.MIGRATE, {
+    sendRequest(
+      API_ENDPOINTS.WEBSITES.MIGRATE,
+      () => {
+        message.success(`Successfully migrated ${websitesPreview.length} websites`);
+        setMigrationComplete(true);
+        setSourceFormId(null);
+        setTargetFormId(null);
+        setWebsitesPreview([]);
+        setMigrating(false);
+      },
+      {
         targetFormId,
-        websiteIds,
-      });
-
-      message.success(`Successfully migrated ${websiteIds.length} websites`);
-      setMigrationComplete(true);
-      setSourceFormId(null);
-      setTargetFormId(null);
-      setWebsitesPreview([]);
-    } catch (error) {
-      message.error(error.response?.data?.message || 'Migration failed');
-    } finally {
-      setMigrating(false);
-    }
+        websiteIds: websitesPreview.map((w) => w.id),
+      },
+      null,
+      (err) => {
+        setMigrating(false);
+        message.error(err || 'Migration failed');
+      }
+    );
   };
 
   const columns = [

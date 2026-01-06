@@ -22,15 +22,15 @@ import {
   SearchOutlined,
   AppstoreAddOutlined,
 } from '@ant-design/icons';
-import service from '../util/API/service';
-import { API_ENDPOINTS } from '../util/constant/CONSTANTS';
+import useHttp from '../../hooks/use-http';
+import { API_ENDPOINTS } from '../../util/constant/CONSTANTS';
 
 const { TextArea } = Input;
 
 export default function Websites() {
   const [websites, setWebsites] = useState([]);
   const [forms, setForms] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { isLoading: loading, sendRequest } = useHttp();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [bulkCreateModalOpen, setBulkCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -59,102 +59,112 @@ export default function Websites() {
     fetchWebsites();
   }, [pagination.current, pagination.pageSize, filters]);
 
-  const fetchForms = async () => {
-    try {
-      const response = await service.get(API_ENDPOINTS.FORMS.LIST);
-      setForms(response.data?.data?.rows || []);
-    } catch (error) {
-      message.error('Failed to fetch forms');
-    }
+  const fetchForms = () => {
+    sendRequest(
+      API_ENDPOINTS.FORMS.LIST,
+      (data) => setForms(data?.data?.rows || []),
+      null,
+      null,
+      (err) => message.error(err || 'Failed to fetch forms')
+    );
   };
 
-  const fetchWebsites = async () => {
-    setLoading(true);
-    try {
-      const params = {
-        page: pagination.current,
-        limit: pagination.pageSize,
-        sort: filters.sort,
-        sortBy: filters.sortBy,
-      };
+  const fetchWebsites = () => {
+    const params = {
+      page: pagination.current,
+      limit: pagination.pageSize,
+      sort: filters.sort,
+      sortBy: filters.sortBy,
+    };
 
-      if (filters.search) {
-        params.search = filters.search;
-      }
-
-      if (filters.formId) {
-        params.formId = filters.formId;
-      }
-
-      const response = await service.get(API_ENDPOINTS.WEBSITES.LIST, { params });
-      setWebsites(response.data?.data?.rows || []);
-      setPagination((prev) => ({
-        ...prev,
-        total: response.data?.data?.count || 0,
-      }));
-    } catch (error) {
-      message.error('Failed to fetch websites');
-    } finally {
-      setLoading(false);
+    if (filters.search) {
+      params.search = filters.search;
     }
+
+    if (filters.formId) {
+      params.formId = filters.formId;
+    }
+
+    sendRequest(
+      API_ENDPOINTS.WEBSITES.LIST,
+      (data) => {
+        setWebsites(data?.data?.rows || []);
+        setPagination((prev) => ({
+          ...prev,
+          total: data?.data?.count || 0,
+        }));
+      },
+      params,
+      null,
+      (err) => message.error(err || 'Failed to fetch websites')
+    );
   };
 
-  const handleCreate = async (values) => {
-    try {
-      await service.post(API_ENDPOINTS.WEBSITES.LIST, values);
-      message.success('Website created successfully');
-      setCreateModalOpen(false);
-      form.resetFields();
-      fetchWebsites();
-    } catch (error) {
-      message.error(error.response?.data?.message || 'Failed to create website');
-    }
+  const handleCreate = (values) => {
+    sendRequest(
+      API_ENDPOINTS.WEBSITES.LIST,
+      () => {
+        message.success('Website created successfully');
+        setCreateModalOpen(false);
+        form.resetFields();
+        fetchWebsites();
+      },
+      values,
+      null,
+      (err) => message.error(err || 'Failed to create website')
+    );
   };
 
-  const handleBulkCreate = async (values) => {
-    try {
-      const domains = values.domains
-        .split('\n')
-        .map((d) => d.trim())
-        .filter((d) => d);
+  const handleBulkCreate = (values) => {
+    const domains = values.domains
+      .split('\n')
+      .map((d) => d.trim())
+      .filter((d) => d);
 
-      await service.post(API_ENDPOINTS.WEBSITES.BULK_CREATE, {
+    sendRequest(
+      API_ENDPOINTS.WEBSITES.BULK_CREATE,
+      () => {
+        message.success(`${domains.length} websites created successfully`);
+        setBulkCreateModalOpen(false);
+        bulkForm.resetFields();
+        fetchWebsites();
+      },
+      {
         domains,
         formId: values.formId,
-      });
-
-      message.success(`${domains.length} websites created successfully`);
-      setBulkCreateModalOpen(false);
-      bulkForm.resetFields();
-      fetchWebsites();
-    } catch (error) {
-      message.error(error.response?.data?.message || 'Failed to create websites');
-    }
+      },
+      null,
+      (err) => message.error(err || 'Failed to create websites')
+    );
   };
 
-  const handleEdit = async (values) => {
-    try {
-      await service.patch(API_ENDPOINTS.WEBSITES.UPDATE(selectedWebsite.id), {
-        formId: values.formId,
-      });
-      message.success('Website updated successfully');
-      setEditModalOpen(false);
-      editForm.resetFields();
-      setSelectedWebsite(null);
-      fetchWebsites();
-    } catch (error) {
-      message.error(error.response?.data?.message || 'Failed to update website');
-    }
+  const handleEdit = (values) => {
+    sendRequest(
+      API_ENDPOINTS.WEBSITES.UPDATE(selectedWebsite.id),
+      () => {
+        message.success('Website updated successfully');
+        setEditModalOpen(false);
+        editForm.resetFields();
+        setSelectedWebsite(null);
+        fetchWebsites();
+      },
+      { formId: values.formId },
+      null,
+      (err) => message.error(err || 'Failed to update website')
+    );
   };
 
-  const handleDelete = async (id) => {
-    try {
-      await service.delete(API_ENDPOINTS.WEBSITES.DELETE(id));
-      message.success('Website deleted successfully');
-      fetchWebsites();
-    } catch (error) {
-      message.error(error.response?.data?.message || 'Failed to delete website');
-    }
+  const handleDelete = (id) => {
+    sendRequest(
+      API_ENDPOINTS.WEBSITES.DELETE(id),
+      () => {
+        message.success('Website deleted successfully');
+        fetchWebsites();
+      },
+      null,
+      null,
+      (err) => message.error(err || 'Failed to delete website')
+    );
   };
 
   const openEditModal = (website) => {

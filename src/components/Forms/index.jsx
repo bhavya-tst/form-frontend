@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Switch, message, Drawer, Tag, Space, Popconfirm } from 'antd';
 import { PlusOutlined, DeleteOutlined, EyeOutlined, CodeOutlined } from '@ant-design/icons';
-import service from '../util/API/service';
-import { API_ENDPOINTS } from '../util/constant/CONSTANTS';
+import useHttp from '../../hooks/use-http';
+import { API_ENDPOINTS } from '../../util/constant/CONSTANTS';
 
 export default function Forms() {
   const [forms, setForms] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { isLoading: loading, sendRequest } = useHttp();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
   const [selectedForm, setSelectedForm] = useState(null);
@@ -16,38 +16,36 @@ export default function Forms() {
     fetchForms();
   }, []);
 
-  const fetchForms = async () => {
-    setLoading(true);
-    try {
-      const response = await service.get(API_ENDPOINTS.FORMS.LIST);
-      setForms(response.data?.data?.rows || []);
-    } catch (error) {
-      message.error('Failed to fetch forms');
-    } finally {
-      setLoading(false);
-    }
+  const fetchForms = () => {
+    sendRequest(
+      API_ENDPOINTS.FORMS.LIST,
+      (data) => setForms(data?.data?.rows || []),
+      null,
+      null,
+      (err) => message.error(err || 'Failed to fetch forms')
+    );
   };
 
-  const handleCreate = async (values) => {
-    try {
-      await service.post(API_ENDPOINTS.FORMS.CREATE, values);
-      message.success('Form created successfully');
-      setCreateModalOpen(false);
-      form.resetFields();
-      fetchForms();
-    } catch (error) {
-      message.error(error.response?.data?.message || 'Failed to create form');
-    }
+  const handleCreate = (values) => {
+    sendRequest(
+      API_ENDPOINTS.FORMS.CREATE,
+      () => {
+        setCreateModalOpen(false);
+        form.resetFields();
+        fetchForms();
+      },
+      values,
+      'Form created successfully'
+    );
   };
 
-  const handleDelete = async (id) => {
-    try {
-      await service.delete(API_ENDPOINTS.FORMS.DELETE(id));
-      message.success('Form deleted successfully');
-      fetchForms();
-    } catch (error) {
-      message.error(error.response?.data?.message || 'Failed to delete form');
-    }
+  const handleDelete = (id) => {
+    sendRequest(
+      API_ENDPOINTS.FORMS.DELETE(id),
+      () => fetchForms(),
+      null,
+      'Form deleted successfully'
+    );
   };
 
   const handlePreview = (record) => {

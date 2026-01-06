@@ -3,19 +3,19 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:30
 
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: '/auth/login',
+    LOGIN: { type: 'POST', endpoint: '/auth/login' },
   },
   FORMS: {
-    LIST: '/forms',
-    CREATE: '/forms',
-    DELETE: (id) => `/forms/${id}`,
+    LIST: { type: 'GET', endpoint: '/forms' },
+    CREATE: { type: 'POST', endpoint: '/forms' },
+    DELETE: (id) => ({ type: 'DELETE', endpoint: `/forms/${id}` }),
   },
   WEBSITES: {
-    LIST: '/websites',
-    BULK_CREATE: '/websites/bulk-create',
-    UPDATE: (id) => `/websites/${id}`,
-    DELETE: (id) => `/websites/${id}`,
-    MIGRATE: '/websites/migrate',
+    LIST: { type: 'GET', endpoint: '/websites' },
+    BULK_CREATE: { type: 'POST', endpoint: '/websites/bulk-create' },
+    UPDATE: (id) => ({ type: 'PATCH', endpoint: `/websites/${id}` }),
+    DELETE: (id) => ({ type: 'DELETE', endpoint: `/websites/${id}` }),
+    MIGRATE: { type: 'POST', endpoint: '/websites/migrate' },
   },
 };
 
