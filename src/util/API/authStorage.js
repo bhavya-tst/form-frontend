@@ -1,15 +1,19 @@
-import { setCookie, eraseCookie } from "./Cookies";
+import { STORAGE_KEYS } from '../constant/CONSTANTS';
 
-export const getAuthToken = () => {
-  return localStorage.getItem("token") || null;
-};
+export const authStorage = {
+  getSecret() {
+    return localStorage.getItem(STORAGE_KEYS.AUTH_SECRET);
+  },
 
-export const setAuthDetails = (accessToken) => {
-  setCookie("SAID", accessToken, 1);
-  localStorage.setItem("token", accessToken);
-};
+  setSecret(secret) {
+    localStorage.setItem(STORAGE_KEYS.AUTH_SECRET, secret);
+  },
 
-export const deleteAuthDetails = () => {
-  eraseCookie("SAID");
-  localStorage.removeItem("token");
+  removeSecret() {
+    localStorage.removeItem(STORAGE_KEYS.AUTH_SECRET);
+  },
+
+  isAuthenticated() {
+    return !!this.getSecret();
+  },
 };

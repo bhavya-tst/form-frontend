@@ -1,74 +1,43 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { setAuthDetails, deleteAuthDetails } from "../util/API/authStorage";
-import { CONSTANTS } from "../util/constant/CONSTANTS";
+import { createContext, useContext, useState, useEffect } from 'react';
+import { authStorage } from '../util/API/authStorage';
 
-const AuthContext = createContext();
-
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
-};
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        const userData = localStorage.getItem("user");
-
-        if (token && userData) {
-            setUser(JSON.parse(userData));
-        }
-        setLoading(false);
-    }, []);
-
-    const login = async (credentials) => {
-        try {
-            const baseURL = import.meta.env.VITE_API_URL;
-            const loginEndpoint = CONSTANTS.API.auth.login.endpoint;
-
-            const response = await fetch(`${baseURL}${loginEndpoint}`, {
-                method: CONSTANTS.API.auth.login.type,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(credentials),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) throw new Error(data.message || "Login failed");
-
-            const token = data.token || data.data?.token;
-            const userData = data.user || data.data?.user || data.data;
-
-            if (!token) throw new Error("No authentication token received");
-
-            setAuthDetails(token);
-            localStorage.setItem("user", JSON.stringify(userData));
-            setUser(userData);
-
-            return { success: true };
-        } catch (error) {
-            console.error("Login error:", error);
-            return { success: false, error: error.message };
-        }
+  useEffect(() => {
+    const checkAuth = () => {
+      const authenticated = authStorage.isAuthenticated();
+      setIsAuthenticated(authenticated);
+      setLoading(false);
     };
 
-    const logout = () => {
-        deleteAuthDetails();
-        localStorage.removeItem("user");
-        setUser(null);
-    };
+    checkAuth();
+  }, []);
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem("token");
-        return token ? { Authorization: `Bearer ${token}` } : {};
-    };
+  const login = (secret) => {
+    authStorage.setSecret(secret);
+    setIsAuthenticated(true);
+  };
 
-    const value = { user, login, logout, getAuthHeaders, loading };
+  const logout = () => {
+    authStorage.removeSecret();
+    setIsAuthenticated(false);
+  };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ isAuthenticated, login, logout, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

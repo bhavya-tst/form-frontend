@@ -1,27 +1,40 @@
-import axios from "axios";
-import { getAuthToken } from "./authStorage";
 
-const Services = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  // timeout: 10000,
+import axios from 'axios';
+import { API_BASE_URL } from '../constant/CONSTANTS';
+import { authStorage } from './authStorage';
+
+const service = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000,
   headers: {
-    Accept: "application/json",
-    // Authorization: `Bearer ${getAuthToken()}`,
+    'Content-Type': 'application/json',
   },
 });
 
-// Add a request interceptor to set auth headers dynamically
-Services.interceptors.request.use((config) => {
-  const token = getAuthToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+service.interceptors.request.use(
+  (config) => {
+    const secret = authStorage.getSecret();
+    if (secret) {
+      config.headers['x-admin-secret'] = secret;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  
-  if (import.meta.env.VITE_ADMIN_SECRET) {
-    config.headers['x-admin-secret'] = import.meta.env.VITE_ADMIN_SECRET;
-  }
-  
-  return config;
-});
+);
 
-export default Services;
+service.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      authStorage.removeSecret();
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default service;
