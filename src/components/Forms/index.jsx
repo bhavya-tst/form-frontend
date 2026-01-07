@@ -1,16 +1,128 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Table, Button, Modal, Form, Input, Switch, message, Drawer, Tag, Space, Popconfirm } from 'antd';
-import { PlusOutlined, DeleteOutlined, EyeOutlined, CodeOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EyeOutlined, CodeOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import useHttp from '../../hooks/use-http';
 import { API_ENDPOINTS } from '../../util/constant/CONSTANTS';
+
+const FormPreview = ({ form }) => {
+  const iframeRef = useRef(null);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe || !form) return;
+
+    // Check for merge conflict markers in file content
+    if (form.sourceType === 'file' && form.fileContent) {
+      if (form.fileContent.includes('<<<<<<<') || form.fileContent.includes('>>>>>>>')) {
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(`
+          <div style="color: red; padding: 20px; font-family: system-ui, sans-serif;">
+            <strong>Error:</strong> Script content contains merge conflict markers. Please clean up the file content.
+          </div>
+        `);
+        doc.close();
+        return;
+      }
+    }
+
+    let scriptUrl = null;
+    let scriptTag = '';
+
+    if (form.sourceType === 'cdn' && form.cdnUrl) {
+      scriptTag = `<script src="${form.cdnUrl}"></script>`;
+    } else if (form.sourceType === 'file' && form.fileContent) {
+      // Create a Blob URL for the file content
+      // This "converts to bob" (Blob) to safely serve the content as if it were an external file
+      const blob = new Blob([form.fileContent], { type: 'text/javascript' });
+      scriptUrl = URL.createObjectURL(blob);
+      scriptTag = `<script src="${scriptUrl}"></script>`;
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { margin: 0; padding: 16px; font-family: system-ui, -apple-system, sans-serif; }
+            .error-box {
+              margin-top: 20px;
+              padding: 16px;
+              background-color: #FEF2F2;
+              border: 1px solid #FCA5A5;
+              border-radius: 8px;
+              color: #991B1B;
+            }
+          </style>
+        </head>
+        <body>
+          <div id="quote-form" data-booking-form></div>
+          
+          <script>
+            window.onerror = function(message, source, lineno, colno, error) {
+              const errorDiv = document.createElement('div');
+              errorDiv.className = 'error-box';
+              errorDiv.innerHTML = '<strong>Script Error:</strong> ' + message + '<br><small>Location: Line ' + lineno + '</small>';
+              document.body.appendChild(errorDiv);
+              return false;
+            };
+          </script>
+
+          ${scriptTag}
+        </body>
+      </html>
+    `;
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    return () => {
+      if (scriptUrl) {
+        URL.revokeObjectURL(scriptUrl);
+      }
+    };
+  }, [form]);
+
+  if (!form) return null;
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {form.version} - {form.sourceType === 'cdn' ? 'CDN' : 'File'}
+          </span>
+          {form.isDefault && (
+            <Tag color="success">Default</Tag>
+          )}
+        </div>
+      </div>
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden min-h-[500px]">
+        <iframe
+          ref={iframeRef}
+          title="Form Preview"
+          className="w-full h-[500px] border-0 bg-white"
+          sandbox="allow-scripts allow-same-origin allow-forms"
+        />
+      </div>
+    </div>
+  );
+};
 
 export default function Forms() {
   const [forms, setForms] = useState([]);
   const { isLoading: loading, sendRequest } = useHttp();
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
+  const [integrationDrawerOpen, setIntegrationDrawerOpen] = useState(false);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [selectedForm, setSelectedForm] = useState(null);
   const [form] = Form.useForm();
+
+
 
   useEffect(() => {
     fetchForms();
@@ -48,9 +160,27 @@ export default function Forms() {
     );
   };
 
-  const handlePreview = (record) => {
+  const handleSetDefault = (id) => {
+    sendRequest(
+      API_ENDPOINTS.FORMS.SET_DEFAULT(id),
+      () => {
+        message.success('Form set as default successfully');
+        fetchForms();
+      },
+      null,
+      null,
+      (err) => message.error(err || 'Failed to set form as default')
+    );
+  };
+
+  const handlePreviewForm = (record) => {
     setSelectedForm(record);
-    setPreviewDrawerOpen(true);
+    setPreviewModalOpen(true);
+  };
+
+  const handleIntegrationCode = (record) => {
+    setSelectedForm(record);
+    setIntegrationDrawerOpen(true);
   };
 
   const getServingUrl = () => {
@@ -58,7 +188,7 @@ export default function Forms() {
   };
 
   const integrationCode = selectedForm
-    ? `<div id="quote-form" data-booking-form></div>\n<script src="${getServingUrl()}/quote-form.iife.js"></script>`
+    ? `<div id="quote-form" data-booking-form></div>\n<script src="${getServingUrl()}/assets/quote-form.iife.js"></script>`
     : '';
 
   const columns = [
@@ -69,10 +199,14 @@ export default function Forms() {
       render: (text) => <span className="font-semibold text-gray-900 dark:text-white">{text}</span>,
     },
     {
-      title: 'Version Number',
-      dataIndex: 'versionNumber',
-      key: 'versionNumber',
-      render: (num) => <Tag color="blue">v{num}</Tag>,
+      title: 'Source Type',
+      dataIndex: 'sourceType',
+      key: 'sourceType',
+      render: (type) => (
+        <Tag color={type === 'cdn' ? 'blue' : 'green'}>
+          {type === 'cdn' ? 'CDN Link' : 'Uploaded File'}
+        </Tag>
+      ),
     },
     {
       title: 'Status',
@@ -99,11 +233,29 @@ export default function Forms() {
           <Button
             type="text"
             icon={<EyeOutlined />}
-            onClick={() => handlePreview(record)}
+            onClick={() => handlePreviewForm(record)}
             className="text-primary-600 hover:text-primary-700"
           >
-            Preview
+            Preview Form
           </Button>
+          <Button
+            type="text"
+            icon={<CodeOutlined />}
+            onClick={() => handleIntegrationCode(record)}
+            className="text-blue-600 hover:text-blue-700"
+          >
+            Integration Code
+          </Button>
+          {!record.isDefault && (
+            <Button
+              type="primary"
+              icon={<CheckCircleOutlined />}
+              onClick={() => handleSetDefault(record.id)}
+              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 border-0"
+            >
+              Set as Default
+            </Button>
+          )}
           <Popconfirm
             title="Delete Form"
             description="Are you sure you want to delete this form?"
@@ -161,7 +313,7 @@ export default function Forms() {
       </div>
 
       <Modal
-        title={<span className="text-lg font-semibold">Create New Form</span>}
+        title={<span className="text-lg font-semibold">Create New Form Version</span>}
         open={createModalOpen}
         onCancel={() => {
           setCreateModalOpen(false);
@@ -175,22 +327,73 @@ export default function Forms() {
           layout="vertical"
           onFinish={handleCreate}
           className="mt-4"
+          initialValues={{ sourceType: 'cdn' }}
         >
           <Form.Item
-            name="version"
-            label={<span className="font-medium">Version Name</span>}
-            rules={[{ required: true, message: 'Please enter version name' }]}
+            name="sourceType"
+            label={<span className="font-medium">Source Type</span>}
+            rules={[{ required: true, message: 'Please select source type' }]}
           >
-            <Input placeholder="e.g., v1.0" size="large" />
+            <Input.Group>
+              <div className="flex gap-4">
+                <Button
+                  type={form.getFieldValue('sourceType') === 'cdn' ? 'primary' : 'default'}
+                  onClick={() => form.setFieldsValue({ sourceType: 'cdn' })}
+                  className={form.getFieldValue('sourceType') === 'cdn' ? 'bg-primary-600 border-0' : ''}
+                >
+                  CDN Link
+                </Button>
+                <Button
+                  type={form.getFieldValue('sourceType') === 'file' ? 'primary' : 'default'}
+                  onClick={() => form.setFieldsValue({ sourceType: 'file' })}
+                  className={form.getFieldValue('sourceType') === 'file' ? 'bg-primary-600 border-0' : ''}
+                >
+                  Upload File
+                </Button>
+              </div>
+            </Input.Group>
           </Form.Item>
 
-          <Form.Item
-            name="isDefault"
-            label={<span className="font-medium">Set as Default</span>}
-            valuePropName="checked"
-            initialValue={false}
-          >
-            <Switch />
+          <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.sourceType !== currentValues.sourceType}>
+            {({ getFieldValue }) => {
+              const sourceType = getFieldValue('sourceType');
+
+              if (sourceType === 'cdn') {
+                return (
+                  <Form.Item
+                    name="cdnUrl"
+                    label={<span className="font-medium">CDN URL</span>}
+                    rules={[
+                      { required: true, message: 'Please enter CDN URL' },
+                      { type: 'url', message: 'Please enter a valid URL' }
+                    ]}
+                  >
+                    <Input
+                      placeholder="https://cdn.example.com/form.js"
+                      size="large"
+                    />
+                  </Form.Item>
+                );
+              }
+
+              if (sourceType === 'file') {
+                return (
+                  <Form.Item
+                    name="fileContent"
+                    label={<span className="font-medium">JavaScript File</span>}
+                    rules={[{ required: true, message: 'Please upload a file' }]}
+                  >
+                    <Input.TextArea
+                      placeholder="Paste your JavaScript code here or upload a file below"
+                      rows={8}
+                      size="large"
+                    />
+                  </Form.Item>
+                );
+              }
+
+              return null;
+            }}
           </Form.Item>
 
           <Form.Item className="mb-0">
@@ -213,6 +416,25 @@ export default function Forms() {
         </Form>
       </Modal>
 
+      <Modal
+        title={
+          <div className="flex items-center gap-2">
+            <EyeOutlined className="text-primary-600" />
+            <span className="text-lg font-semibold">Form Preview</span>
+          </div>
+        }
+        open={previewModalOpen}
+        onCancel={() => {
+          setPreviewModalOpen(false);
+          setSelectedForm(null);
+        }}
+        footer={null}
+        width={800}
+        destroyOnClose
+      >
+        {selectedForm && <FormPreview form={selectedForm} />}
+      </Modal>
+
       <Drawer
         title={
           <div className="flex items-center gap-2">
@@ -221,8 +443,8 @@ export default function Forms() {
           </div>
         }
         placement="right"
-        onClose={() => setPreviewDrawerOpen(false)}
-        open={previewDrawerOpen}
+        onClose={() => setIntegrationDrawerOpen(false)}
+        open={integrationDrawerOpen}
         width={600}
       >
         {selectedForm && (
@@ -242,6 +464,31 @@ export default function Forms() {
                   <span className="text-gray-600 dark:text-gray-400">Version Number:</span>
                   <Tag color="blue">v{selectedForm.versionNumber}</Tag>
                 </div>
+                <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                  <span className="text-gray-600 dark:text-gray-400">Source Type:</span>
+                  <Tag color={selectedForm.sourceType === 'cdn' ? 'blue' : 'green'}>
+                    {selectedForm.sourceType === 'cdn' ? 'CDN Link' : 'Uploaded File'}
+                  </Tag>
+                </div>
+                {selectedForm.sourceType === 'cdn' && selectedForm.cdnUrl && (
+                  <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span className="text-gray-600 dark:text-gray-400">CDN URL:</span>
+                    <a
+                      href={selectedForm.cdnUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary-600 hover:text-primary-700 font-medium"
+                    >
+                      View Link
+                    </a>
+                  </div>
+                )}
+                {selectedForm.sourceType === 'file' && (
+                  <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span className="text-gray-600 dark:text-gray-400">File Content:</span>
+                    <span className="text-gray-900 dark:text-white font-medium">Stored in Database</span>
+                  </div>
+                )}
                 <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
                   <span className="text-gray-600 dark:text-gray-400">Status:</span>
                   {selectedForm.isDefault ? (

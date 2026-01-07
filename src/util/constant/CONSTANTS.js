@@ -8,10 +8,12 @@ export const API_ENDPOINTS = {
   FORMS: {
     LIST: { type: 'GET', endpoint: '/forms' },
     CREATE: { type: 'POST', endpoint: '/forms' },
+    SET_DEFAULT: (id) => ({ type: 'PATCH', endpoint: `/forms/${id}/set-default` }),
     DELETE: (id) => ({ type: 'DELETE', endpoint: `/forms/${id}` }),
   },
   WEBSITES: {
     LIST: { type: 'GET', endpoint: '/websites' },
+    CREATE: { type: 'POST', endpoint: '/websites' },
     BULK_CREATE: { type: 'POST', endpoint: '/websites/bulk-create' },
     UPDATE: (id) => ({ type: 'PATCH', endpoint: `/websites/${id}` }),
     DELETE: (id) => ({ type: 'DELETE', endpoint: `/websites/${id}` }),

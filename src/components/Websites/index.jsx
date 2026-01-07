@@ -102,7 +102,7 @@ export default function Websites() {
 
   const handleCreate = (values) => {
     sendRequest(
-      API_ENDPOINTS.WEBSITES.LIST,
+      API_ENDPOINTS.WEBSITES.CREATE,
       () => {
         message.success('Website created successfully');
         setCreateModalOpen(false);
@@ -179,7 +179,7 @@ export default function Websites() {
   };
 
   const handleFormFilter = (value) => {
-    setFilters((prev) => ({ ...prev, formId: value }));
+    setFilters((prev) => ({ ...prev, formId: value || null }));
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
@@ -223,6 +223,7 @@ export default function Websites() {
           />
           <Select
             placeholder="Filter by form"
+            value={filters.formId}
             onChange={handleFormFilter}
             size="large"
             allowClear

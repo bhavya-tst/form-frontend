@@ -30,14 +30,15 @@ const useHttp = () => {
   const sendRequest = useCallback(
     async (url, responseHandler, payload, successMessage, errorHandler) => {
       setIsLoading(true);
-      console.log('useHttp sendRequest called with:', { url, payload });
-      console.log('Services instance:', Services);
       try {
         let response;
         // url object structure: { type: "POST", endpoint: "..." }
         switch (url.type) {
           case "POST": response = await Services.post(url.endpoint, payload); break;
-          case "PATCH": response = await Services.patch(url.endpoint, payload); break;
+          case "PATCH": 
+            // Only send payload if it exists to avoid sending "null" string
+            response = payload ? await Services.patch(url.endpoint, payload) : await Services.patch(url.endpoint);
+            break;
           case "DELETE": 
             // Handle delete with payload if needed, usually passed as config but axios.delete(url, {data})
              if (payload) {
