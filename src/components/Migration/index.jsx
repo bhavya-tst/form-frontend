@@ -34,8 +34,8 @@ export default function Migration() {
 
   const fetchForms = () => {
     sendRequest(
-      API_ENDPOINTS.FORMS.LIST,
-      (data) => setForms(data?.data?.rows || []),
+      API_ENDPOINTS.FORMS.DROPDOWN,
+      (data) => setForms(data?.data || []),
       null,
       null,
       (err) => message.error(err || 'Failed to fetch forms')

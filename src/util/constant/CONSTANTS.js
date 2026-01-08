@@ -7,6 +7,7 @@ export const API_ENDPOINTS = {
   },
   FORMS: {
     LIST: { type: 'GET', endpoint: '/forms' },
+    DROPDOWN: { type: 'GET', endpoint: '/forms/dropdown' },
     CREATE: { type: 'POST', endpoint: '/forms' },
     SET_DEFAULT: (id) => ({ type: 'PATCH', endpoint: `/forms/${id}/set-default` }),
     DELETE: (id) => ({ type: 'DELETE', endpoint: `/forms/${id}` }),
