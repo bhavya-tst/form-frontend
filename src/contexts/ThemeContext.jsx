@@ -1,32 +1,18 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 import { ConfigProvider, theme as antdTheme } from 'antd';
-import { STORAGE_KEYS } from '../util/constant/CONSTANTS';
 
 const ThemeContext = createContext(null);
 
 export const ThemeProvider = ({ children }) => {
-  const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.THEME);
-    if (saved) return saved === 'dark';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-
   useEffect(() => {
+    // Always set dark mode
     const root = window.document.documentElement;
-    if (isDark) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    localStorage.setItem(STORAGE_KEYS.THEME, isDark ? 'dark' : 'light');
-  }, [isDark]);
+    root.classList.add('dark');
+  }, []);
 
-  const toggleTheme = () => {
-    setIsDark((prev) => !prev);
-  };
-
+  // Dark mode configuration only
   const antdConfig = {
-    algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+    algorithm: antdTheme.darkAlgorithm,
     token: {
       colorPrimary: '#0ea5e9',
       colorSuccess: '#22c55e',
@@ -39,7 +25,7 @@ export const ThemeProvider = ({ children }) => {
   };
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+    <ThemeContext.Provider value={{ isDark: true }}>
       <ConfigProvider theme={antdConfig}>
         {children}
       </ConfigProvider>

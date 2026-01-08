@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, message } from 'antd';
-import { LockOutlined, FormOutlined } from '@ant-design/icons';
+import { LockOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useAuth } from '../../contexts/AuthContext';
 import useHttp from '../../hooks/use-http';
 import { API_ENDPOINTS } from '../../util/constant/CONSTANTS';
@@ -26,21 +26,21 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-large mb-4">
-            <FormOutlined className="text-white text-3xl" />
+            <FileTextOutlined className="text-white text-3xl" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Dream Form Platform
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Quote Portal
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-400">
             Enter your admin secret to continue
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-large p-8 border border-gray-100 dark:border-gray-800">
+        <div className="bg-gray-900 rounded-2xl shadow-large p-8 border border-gray-800">
           <Form
             name="login"
             onFinish={onFinish}
@@ -50,7 +50,7 @@ export default function Login() {
           >
             <Form.Item
               name="password"
-              label={<span className="text-gray-700 dark:text-gray-300 font-medium">Admin Secret</span>}
+              label={<span className="text-gray-300 font-medium">Admin Secret</span>}
               rules={[
                 {
                   required: true,
@@ -78,15 +78,15 @@ export default function Login() {
             </Form.Item>
           </Form>
 
-          <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-800">
-            <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+          <div className="mt-6 pt-6 border-gray-800">
+            <p className="text-xs text-gray-400">
               Secure authentication powered by x-admin-secret
             </p>
           </div>
         </div>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-gray-400">
             Protected area. Authorized access only.
           </p>
         </div>

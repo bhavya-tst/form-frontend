@@ -91,9 +91,9 @@ const FormPreview = ({ form }) => {
 
   return (
     <div className="space-y-4">
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+      <div className="bg-gray-800 rounded-lg p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-gray-300">
             {form.version} - {form.sourceType === 'cdn' ? 'CDN' : 'File'}
           </span>
           {form.isDefault && (
@@ -101,7 +101,7 @@ const FormPreview = ({ form }) => {
           )}
         </div>
       </div>
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden min-h-[500px]">
+      <div className="border border-gray-700 rounded-lg overflow-hidden min-h-[500px]">
         <iframe
           ref={iframeRef}
           title="Form Preview"
@@ -196,7 +196,7 @@ export default function Forms() {
       title: 'Version',
       dataIndex: 'version',
       key: 'version',
-      render: (text) => <span className="font-semibold text-gray-900 dark:text-white">{text}</span>,
+      render: (text) => <span className="font-semibold text-white">{text}</span>,
     },
     {
       title: 'Source Type',
@@ -223,7 +223,11 @@ export default function Forms() {
       title: 'Created At',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (date) => new Date(date).toLocaleString(),
+      render: (date) => (
+        <span className="text-gray-400">
+          {new Date(date).toLocaleString()}
+        </span>
+      ),
     },
     {
       title: 'Actions',
@@ -281,8 +285,8 @@ export default function Forms() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Forms Manager</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <h2 className="text-2xl font-bold text-white">Forms Manager</h2>
+          <p className="text-gray-400 mt-1">
             Manage and configure your form versions
           </p>
         </div>
@@ -297,7 +301,7 @@ export default function Forms() {
         </Button>
       </div>
 
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-soft border border-gray-100 dark:border-gray-800 overflow-hidden">
+      <div className="bg-gray-900 rounded-xl shadow-soft border border-gray-800 overflow-hidden">
         <Table
           columns={columns}
           dataSource={forms}
@@ -450,29 +454,29 @@ export default function Forms() {
         {selectedForm && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-base font-semibold text-white mb-2">
                 Form Details
               </h3>
               <div className="space-y-2">
-                <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                  <span className="text-gray-600 dark:text-gray-400">Version:</span>
-                  <span className="font-medium text-gray-900 dark:text-white">
+                <div className="flex justify-between py-2 border-gray-800">
+                  <span className="text-gray-400">Version:</span>
+                  <span className="font-medium text-white">
                     {selectedForm.version}
                   </span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                  <span className="text-gray-600 dark:text-gray-400">Version Number:</span>
+                <div className="flex justify-between py-2 border-gray-800">
+                  <span className="text-gray-400">Version Number:</span>
                   <Tag color="blue">v{selectedForm.versionNumber}</Tag>
                 </div>
-                <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                  <span className="text-gray-600 dark:text-gray-400">Source Type:</span>
+                <div className="flex justify-between py-2 border-gray-800">
+                  <span className="text-gray-400">Source Type:</span>
                   <Tag color={selectedForm.sourceType === 'cdn' ? 'blue' : 'green'}>
                     {selectedForm.sourceType === 'cdn' ? 'CDN Link' : 'Uploaded File'}
                   </Tag>
                 </div>
                 {selectedForm.sourceType === 'cdn' && selectedForm.cdnUrl && (
-                  <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                    <span className="text-gray-600 dark:text-gray-400">CDN URL:</span>
+                  <div className="flex justify-between py-2 border-gray-800">
+                    <span className="text-gray-400">CDN URL:</span>
                     <a
                       href={selectedForm.cdnUrl}
                       target="_blank"
@@ -484,13 +488,13 @@ export default function Forms() {
                   </div>
                 )}
                 {selectedForm.sourceType === 'file' && (
-                  <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                    <span className="text-gray-600 dark:text-gray-400">File Content:</span>
-                    <span className="text-gray-900 dark:text-white font-medium">Stored in Database</span>
+                  <div className="flex justify-between py-2 border-gray-800">
+                    <span className="text-gray-400">File Content:</span>
+                    <span className="text-white font-medium">Stored in Database</span>
                   </div>
                 )}
-                <div className="flex justify-between py-2 border-b border-gray-100 dark:border-gray-800">
-                  <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                <div className="flex justify-between py-2 border-gray-800">
+                  <span className="text-gray-400">Status:</span>
                   {selectedForm.isDefault ? (
                     <Tag color="success">Default</Tag>
                   ) : (
@@ -502,7 +506,7 @@ export default function Forms() {
 
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-base font-semibold text-white">
                   Integration Code
                 </h3>
                 <Button
@@ -517,18 +521,18 @@ export default function Forms() {
                   Copy Code
                 </Button>
               </div>
-              <div className="bg-gray-900 dark:bg-gray-950 rounded-lg p-4 overflow-x-auto">
+              <div className="bg-gray-950 rounded-lg p-4 overflow-x-auto">
                 <pre className="text-sm text-green-400 font-mono whitespace-pre-wrap break-all">
                   {integrationCode}
                 </pre>
               </div>
             </div>
 
-            <div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-4 border border-primary-200 dark:border-primary-800">
-              <h4 className="font-medium text-primary-900 dark:text-primary-100 mb-2">
+            <div className="bg-primary-900/20 rounded-lg p-4 border border-primary-800">
+              <h4 className="font-medium text-primary-100 mb-2">
                 How to Use
               </h4>
-              <ol className="text-sm text-primary-700 dark:text-primary-300 space-y-1 list-decimal list-inside">
+              <ol className="text-primary-300 space-y-1 list-decimal list-inside">
                 <li>Copy the integration code above</li>
                 <li>Paste it into your website's HTML</li>
                 <li>The form will automatically render on your page</li>

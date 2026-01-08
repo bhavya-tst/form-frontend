@@ -7,10 +7,9 @@ import {
   FormOutlined,
   GlobalOutlined,
   SwapOutlined,
-  MoonOutlined,
-  SunOutlined,
   LogoutOutlined,
   UserOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -43,7 +42,7 @@ export default function AdminLayout() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark } = useTheme();
   const { logout } = useAuth();
 
   const handleMenuClick = (path) => {
@@ -58,15 +57,6 @@ export default function AdminLayout() {
 
   const userMenuItems = [
     {
-      key: 'theme',
-      icon: isDark ? <SunOutlined /> : <MoonOutlined />,
-      label: isDark ? 'Light Mode' : 'Dark Mode',
-      onClick: toggleTheme,
-    },
-    {
-      type: 'divider',
-    },
-    {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: 'Logout',
@@ -77,18 +67,14 @@ export default function AdminLayout() {
 
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
-      <div className="h-16 flex items-center justify-center border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center gap-3 px-4">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-lg">
-            <FormOutlined className="text-white text-xl" />
+      <div className="h-16 flex items-center justify-center border-b border-gray-800 px-4">
+        {collapsed ? (
+          <div className="text-3xl font-bold text-white">Q</div>
+        ) : (
+          <div className="flex items-center justify-center w-full">
+            <span className="font-bold text-xl text-white whitespace-nowrap">Quote Portal</span>
           </div>
-          {!collapsed && (
-            <div className="flex flex-col">
-              <span className="font-bold text-lg text-gray-900 dark:text-white">Dream</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">Form Platform</span>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       <Menu
@@ -100,19 +86,6 @@ export default function AdminLayout() {
           onClick: () => handleMenuClick(item.path),
         }))}
       />
-
-      <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-        {!collapsed && (
-          <div className="p-3 rounded-lg bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 border border-primary-200 dark:border-primary-800">
-            <p className="text-xs font-semibold text-primary-900 dark:text-primary-100 mb-1">
-              Need Help?
-            </p>
-            <p className="text-xs text-primary-700 dark:text-primary-300">
-              Check our documentation for guides and tutorials.
-            </p>
-          </div>
-        )}
-      </div>
     </div>
   );
 
@@ -125,7 +98,7 @@ export default function AdminLayout() {
         breakpoint="lg"
         collapsedWidth={80}
         width={260}
-        className="hidden lg:block bg-white dark:bg-gray-900 shadow-soft"
+        className="hidden lg:block bg-gray-900 shadow-soft"
         style={{
           overflow: 'auto',
           height: '100vh',
@@ -151,12 +124,13 @@ export default function AdminLayout() {
       </Drawer>
 
       <Layout
-        className="bg-gray-50 dark:bg-gray-950"
+        className="bg-gray-950 min-h-screen"
         style={{
           marginLeft: window.innerWidth >= 1024 ? (collapsed ? 80 : 260) : 0,
+          minHeight: '100vh',
         }}
       >
-        <Header className="sticky top-0 z-10 bg-white dark:bg-gray-900 shadow-soft px-4 md:px-6 flex items-center justify-between h-16">
+        <Header className="sticky top-0 z-10 bg-gray-900 shadow-soft px-4 md:px-6 flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
             <Button
               type="text"
@@ -168,21 +142,14 @@ export default function AdminLayout() {
                   setCollapsed(!collapsed);
                 }
               }}
-              className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400"
+              className="text-gray-300 hover:text-primary-400"
             />
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white hidden md:block">
+            <h1 className="text-lg font-semibold text-white hidden md:block">
               {menuItems.find((item) => item.key === location.pathname)?.label || 'Dashboard'}
             </h1>
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
-              type="text"
-              icon={isDark ? <SunOutlined /> : <MoonOutlined />}
-              onClick={toggleTheme}
-              className="text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hidden md:flex"
-            />
-
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
               <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
                 <Avatar
@@ -190,7 +157,7 @@ export default function AdminLayout() {
                   icon={<UserOutlined />}
                   className="bg-gradient-to-br from-primary-500 to-primary-600"
                 />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden md:block">
+                <span className="text-sm font-medium text-gray-300 hidden md:block">
                   Admin
                 </span>
               </div>
@@ -198,7 +165,7 @@ export default function AdminLayout() {
           </div>
         </Header>
 
-        <Content className="p-4 md:p-6">
+        <Content className="p-4 md:p-6 flex-1 bg-gray-950">
           <Outlet />
         </Content>
       </Layout>
